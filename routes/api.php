@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
+
+
+Route::group(["middleware" => "api"], function ($routes){
+    Route::post("/register", [\App\Http\Controllers\auth\AuthController::class, "register"])->name("register");
+    Route::post('/login', [\App\Http\Controllers\auth\AuthController::class, "login"])->name("login");
+    Route::post('/logout', [\App\Http\Controllers\auth\AuthController::class, "logout"]);
+    Route::post('/refresh', [\App\Http\Controllers\auth\AuthController::class, "refresh"]);
+    Route::post('/me', [\App\Http\Controllers\auth\AuthController::class, "me"]);
 });
+
