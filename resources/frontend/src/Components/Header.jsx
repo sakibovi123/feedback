@@ -38,8 +38,18 @@ export default function Header() {
           </div>
           : 
           <div className="flex items-center ">
+            
             <p className="mx-4 text-lg">Welcome {user.name}</p>
+            <Link className="mx-5 font-bold" to="/">
+              Home
+            </Link>
             <button onClick={logoutUser} className="mx-5 font-bold">Logout</button>
+            <Link to="/forms" className="mx-5 font-bold">
+              Forms
+            </Link>
+            <Link to="/create-form" className="mx-5 font-bold">
+              Create Form
+            </Link>
           </div>
         }
         

@@ -20,11 +20,20 @@ use App\Http\Controllers;
 // });
 
 
+Route::post("/register", [\App\Http\Controllers\auth\AuthController::class, "register"])->name("register");
+Route::post('/login', [\App\Http\Controllers\auth\AuthController::class, "login"])->name("login");
+
 Route::group(["middleware" => "api"], function ($routes){
-    Route::post("/register", [\App\Http\Controllers\auth\AuthController::class, "register"])->name("register");
-    Route::post('/login', [\App\Http\Controllers\auth\AuthController::class, "login"])->name("login");
     Route::post('/logout', [\App\Http\Controllers\auth\AuthController::class, "logout"]);
     Route::post('/refresh', [\App\Http\Controllers\auth\AuthController::class, "refresh"]);
     Route::post('/me', [\App\Http\Controllers\auth\AuthController::class, "me"]);
+
+    // form url
+    Route::get("/forms", [Controllers\FormController::class, "index"])->name("get_forms");
+    Route::get("/form-details/{slug}/", [Controllers\FormController::class, "show"])->name("form-details");
+    Route::post("/create-form", [Controllers\FormController::class, "store"])->name("save_form");
+    Route::post("/save-response/{slug}/", [Controllers\FormController::class, "post_feedback"])->name("post_feedback");
+
+    Route::get("/responses/{slug}/", [Controllers\FormController::class, "show_form_wise_feedback"]);
 });
 

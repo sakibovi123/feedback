@@ -12,6 +12,7 @@ class Form extends Model
     protected $table = "forms";
 
     protected $fillable = [
+        "slug",
         "user_id",
         "share_url",
         "name",
@@ -22,5 +23,15 @@ class Form extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function questions()
+    {
+        return $this->belongsToMany(Question::class);
+    }
+
+    public function feedback()
+    {
+        return $this->hasMany(Feedback::class);
     }
 }

@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Feedback;
 use App\Models\Form;
-use App\Models\Qustion;
+use App\Models\Question;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
 
 class FormController extends Controller
 {
@@ -15,12 +19,21 @@ class FormController extends Controller
     public function index()
     {
         try{
-            $forms = Form::all();
-
-            return response()->json([
-                "success" => true,
-                "data" => $forms
-            ]);
+//            $forms = Form::with("questions")->get();
+            if ( Auth::user() )
+            {
+                $forms = Form::where("user_id", Auth::user()->id)->with("questions")->paginate(15);
+                return response()->json([
+                    "success" => true,
+                    "data" => $forms
+                ]);
+            }
+            else{
+                return response()->json([
+                    "success" => false,
+                    "message" => "You are not logged in!"
+                ], 403);
+            }
         } catch( Exception $e ) {
             return response()->json([
                 "success" => "false",
@@ -45,24 +58,31 @@ class FormController extends Controller
         try {
             $base_url = env("APP_URL");
             $form = Form::create([
-                "slug" => uniqid(),
+                "slug" => Str::slug(uniqid()),
                 "name" => $request->get("name"),
+                "user_id" => Auth::user()->id,
                 "description" => $request->get("description"),
             ]);
-            
-            $form->share_url = $base_url . "/" . $form->slug;
 
-            $questions = $request->get("questions", []);
-
-            foreach( $questions as $question )
-            {
-                $qus = Qustion::create($question);
-                $form->qustion_id = $qus->id;
-            }
-            
+            $form->share_url = $base_url . "/api/form-details/" . $form->slug;
             $form->save();
+            $question_titles = $request->get("question_titles", []);
+            $attachedQuestions = [];
+            foreach ($question_titles as $question_title)
+            {
+                $question = Question::create([
+                    "question_title" => $question_title
+                ]);
+                $attachedQuestions[] = $question;
+                $form->questions()->attach($question->id);
+            }
 
-            return response()->json();
+            $form->setRelation("questions", collect($attachedQuestions));
+
+            return response()->json([
+                "success" => true,
+                "data" => $form
+            ]);
         } catch( Exception $e ){
             return response()->json([
                 "success" => false,
@@ -74,11 +94,17 @@ class FormController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $slug, Request $request)
     {
-        //
         try{
-            return response()->json();
+            $form = Form::where("slug", $slug)->first();
+            $formWithQuestion = $form->with("questions")->get();
+            $questions = $form->questions;
+            return response()->json([
+                "success" => true,
+                "data" => $form,
+//                "questions" => $questions
+            ]);
         } catch( Exception $e ){
             return response()->json([
                 "success" => false,
@@ -96,18 +122,50 @@ class FormController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * post the feedback to specified form in storage.
      */
-    public function update(Request $request, string $id)
+    public function post_feedback(Request $request, string $slug)
     {
         try{
-            return response()->json();
+            $form = Form::where("slug", $slug)->first();
+            $formWithQuestion = $form->with("questions")->get();
+            $questions = $form->questions;
+            $answers = $request->get("answers");
+            foreach( $questions as $index => $question )
+            {
+                $feedback = Feedback::create([
+                    "form_id" => $form->id,
+                    "name" => $request->get("name"),
+                    "email" => $request->get("email"),
+                    "answer" => $answers[$index]
+                ]);
+            }
+            return response()->json([
+                "success" => true,
+                "message" => "Response Submitted"
+            ]);
         } catch( Exception $e ){
             return response()->json([
                 "success" => false,
                 "message" => $e->getMessage()
             ]);
         }
+    }
+
+
+    /**
+        showing form wise feedbacks
+     */
+    public function show_form_wise_feedback(string $slug)
+    {
+        $form = Form::where("slug", $slug)->firstOrFail();
+        $questions = $form->questions;
+        $feedbacks = Feedback::where("form_id", $form->id)->get();
+        return response()->json([
+            "success" => true,
+            "questions" => $questions,
+            "feedbacks" => $feedbacks
+        ], 200);
     }
 
     /**
