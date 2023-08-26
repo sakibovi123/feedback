@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string("name", 255)->nullable();
             $table->string("email", 255)->nullable();
             $table->foreignIdFor(\App\Models\Form::class);
+            $table->foreignIdFor(\App\Models\Question::class);
             $table->string("answer", 255)->nullable();
         });
     }

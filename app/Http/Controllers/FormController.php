@@ -19,13 +19,12 @@ class FormController extends Controller
     public function index()
     {
         try{
-//            $forms = Form::with("questions")->get();
             if ( Auth::user() )
             {
                 $forms = Form::where("user_id", Auth::user()->id)->with("questions")->paginate(15);
                 return response()->json([
                     "success" => true,
-                    "data" => $forms
+                    "data" => $forms,
                 ]);
             }
             else{
@@ -100,10 +99,11 @@ class FormController extends Controller
             $form = Form::where("slug", $slug)->first();
             $formWithQuestion = $form->with("questions")->get();
             $questions = $form->questions;
+            $formWithFeedback = $form->feedback()->get();
             return response()->json([
                 "success" => true,
                 "data" => $form,
-//                "questions" => $questions
+                "feedbacks" => $formWithFeedback
             ]);
         } catch( Exception $e ){
             return response()->json([
@@ -137,6 +137,7 @@ class FormController extends Controller
                     "form_id" => $form->id,
                     "name" => $request->get("name"),
                     "email" => $request->get("email"),
+                    "question_id" => $question->id,
                     "answer" => $answers[$index]
                 ]);
             }
@@ -174,12 +175,17 @@ class FormController extends Controller
     public function destroy(string $id)
     {
         try{
-            return response()->json();
+            $form = Form::find($id);
+            $form->delete();
+            return response()->json([
+                "success" => true,
+                "message" => "Form removed!"
+            ], 200);
         } catch( Exception $e ){
             return response()->json([
                 "success" => false,
                 "message" => $e->getMessage()
-            ]);
+            ], 500);
         }
     }
 }

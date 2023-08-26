@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Feedback;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class FeedBackController extends Controller
 {
@@ -11,7 +13,23 @@ class FeedBackController extends Controller
      */
     public function index()
     {
-        //
+        // showing all response
+        try{
+            if( Auth::user() ){
+                $feedbacks = Feedback::where()->get();
+            } else{
+                return response()->json([
+                    "success" => false,
+                    "message" => "Not authorized!"
+                ],403);
+            }
+
+        } catch( \Exception $e ){
+            return response()->json([
+                "success" => false,
+                "message" => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

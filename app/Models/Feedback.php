@@ -14,12 +14,18 @@ class Feedback extends Model
         "name",
         "email",
         "form_id",
+        "question_id",
         "answer"
     ];
 
     public function forms()
     {
         return $this->belongsTo(Form::class);
+    }
+
+    public function questions()
+    {
+        return $this->belongsTo(Question::class);
     }
 
 
